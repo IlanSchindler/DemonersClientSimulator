@@ -1,21 +1,78 @@
 ﻿@page "/"
+@using DemonersClientSimulator.Shared
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        Client Simulator Prompt Generator
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <TelerikMultiSelect Data="@LanguageOptions" @bind-Value="@SelectedLanguages" TextField="LanguageName" ValueField="LanguageId"/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <TelerikComboBox Data="@ProjectTypeOptions" @bind-Value="@SelectedProjectType" TextField="ProjectTypeName" ValueField="ProjectTypeId"/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <TelerikComboBox Data="@DifficultyOptions" @bind-Value="@SelectedDifficulty" TextField="DifficultyName" ValueField="DifficultyId" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <TelerikButton OnClick="@GetPrompt">Generate Prompt</TelerikButton>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <TelerikTextArea @bind-Value="@GeneratedPrompt" AutoSize="true" Enabled="false"/>
+      </div>
+    </div>
+  </div>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.<br />
+@code{
+  public List<LanguagesComboModel> LanguageOptions { get; set; }
+  public List<int> SelectedLanguages { get; set; }
 
-<TelerikButton OnClick="@SayHelloHandler" Primary="true">Say Hello</TelerikButton>
+  public List<ProjectTypeComboModel> ProjectTypeOptions { get; set; }
+  public int SelectedProjectType { get; set; }
 
-<br />
+  public List<DifficultyComboModel> DifficultyOptions { get; set; }
+  public int SelectedDifficulty { get; set; }
 
-@helloString
+  public string GeneratedPrompt { get; set; }
 
-@code {
-    MarkupString helloString;
+  protected override async Task OnInitializedAsync() {
+    throw new NotImplementedException();
+    /*
+    initialize language options
+    initialize dificulty options
+    initialize project types
+      */
+  }
 
-    void SayHelloHandler()
-    {
-        string msg = string.Format("Hello from <strong>Telerik Blazor</strong> at {0}.<br /> Now you can use C# to write front-end!", DateTime.Now);
-        helloString = new MarkupString(msg);
-    }
+  async Task GetPrompt() {
+    throw new NotImplementedException();
+  }
+
+
+
+  //public class LanguagesComboModel {
+  //  public string LanguageName { get; set; }
+  //  public int LanguageId { get; set; }
+  //}
+
+  //public class ProjectTypeComboModel {
+  //  public string ProjectTypeName { get; set; }
+  //  public int ProjectTypeId { get; set; }
+  //}
+
+  //public class DifficultyComboModel {
+  //  public string DifficultyName { get; set; }
+  //  public int DifficultyId { get; set; }
+  //}
 }
