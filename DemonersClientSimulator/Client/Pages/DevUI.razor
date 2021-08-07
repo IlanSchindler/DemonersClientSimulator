@@ -1,0 +1,287 @@
+﻿@page "/DevUI"
+@using DemonersClientSimulator.Shared.DataStorage
+@inject DemonersClientSimulator.Client.Shared.BackendService Backend
+@inject HttpClient Http 
+<div>
+  <TelerikButton OnClick="@SaveData">Save</TelerikButton>
+  <TelerikButton OnClick="@LoadData">Load Manual</TelerikButton>
+  <TelerikTabStrip>
+    <TabStripTab Title="Project Types">
+      <TelerikTreeList Data="@ProjectTypes"
+                       EditMode="@TreeListEditMode.Inline"
+                       OnUpdate="@UpdateProjectTypeHandler"
+                       OnDelete="@DeleteProjectTypeHandler"
+                       OnCreate="@CreateProjectTypeHandler"
+                       ItemsField="@(nameof(TreeListVM.Options))">
+        <TreeListToolBar>
+          <TreeListCommandButton Command="Add" Icon="add">Add Project Type</TreeListCommandButton>
+        </TreeListToolBar>
+        <TreeListColumns>
+          <TreeListCommandColumn Width="280px">
+            <TreeListCommandButton Command="Add" Icon="plus">Add Option</TreeListCommandButton>
+            <TreeListCommandButton Command="Edit" Icon="edit">Edit</TreeListCommandButton>
+            <TreeListCommandButton Command="Delete" Icon="delete">Delete</TreeListCommandButton>
+            <TreeListCommandButton Command="Save" Icon="save" ShowInEdit="true">Update</TreeListCommandButton>
+            <TreeListCommandButton Command="Cancel" Icon="cancel" ShowInEdit="true">Cancel</TreeListCommandButton>
+          </TreeListCommandColumn>
+
+          <TreeListColumn Field="Name" Expandable="true" />
+          <TreeListColumn Field="Id" Editable="false" />
+        </TreeListColumns>
+      </TelerikTreeList>
+
+    </TabStripTab>
+    <TabStripTab Title="Difficulties">
+      <TelerikTreeList Data="@Difficulties"
+                       EditMode="@TreeListEditMode.Inline"
+                       OnUpdate="@UpdateDifficultiesHandler"
+                       OnDelete="@DeleteDifficultiesHandler"
+                       OnCreate="@CreateDifficultiesHandler"
+                       ItemsField="@(nameof(TreeListVM.Options))">
+        <TreeListToolBar>
+          <TreeListCommandButton Command="Add" Icon="add">Add Difficulty</TreeListCommandButton>
+        </TreeListToolBar>
+        <TreeListColumns>
+          <TreeListCommandColumn Width="280px">
+            <TreeListCommandButton Command="Add" Icon="plus">Add Element</TreeListCommandButton>
+            <TreeListCommandButton Command="Edit" Icon="edit">Edit</TreeListCommandButton>
+            <TreeListCommandButton Command="Delete" Icon="delete">Delete</TreeListCommandButton>
+            <TreeListCommandButton Command="Save" Icon="save" ShowInEdit="true">Update</TreeListCommandButton>
+            <TreeListCommandButton Command="Cancel" Icon="cancel" ShowInEdit="true">Cancel</TreeListCommandButton>
+          </TreeListCommandColumn>
+
+          <TreeListColumn Field="Name" Expandable="true"    />
+          <TreeListColumn Field="Id" Editable="false"       />
+          <TreeListColumn Field="Priority" Editable="true"  />
+          <TreeListColumn Field="ECount" Editable="true"    />
+        </TreeListColumns>
+      </TelerikTreeList>
+    </TabStripTab>
+    <TabStripTab Title="Languages">
+      <TelerikGrid Data=@Languages EditMode="@GridEditMode.Inline" 
+                   OnUpdate="@UpdateLanguageHandler" OnDelete="@DeleteLanguageHandler" OnCreate="@CreateLanguageHandler">
+        <GridToolBar>
+          <GridCommandButton Command="Add" Icon="add">Add Language</GridCommandButton>
+        </GridToolBar>
+        <GridColumns>
+          <GridColumn Field=@nameof(Language.Id) Title="ID" Editable="false" />
+          <GridColumn Field=@nameof(Language.Name) Title="Name" />
+          <GridCommandColumn>
+            <GridCommandButton Command="Save" Icon="save" ShowInEdit="true">Update</GridCommandButton>
+            <GridCommandButton Command="Edit" Icon="edit">Edit</GridCommandButton>
+            <GridCommandButton Command="Delete" Icon="delete">Delete</GridCommandButton>
+            <GridCommandButton Command="Cancel" Icon="cancel" ShowInEdit="true">Cancel</GridCommandButton>
+          </GridCommandColumn>
+        </GridColumns>
+      </TelerikGrid>
+    </TabStripTab>
+  </TelerikTabStrip>
+
+  <TelerikTextArea @bind-Value="SaveDataString" AutoSize="true" />
+</div>
+@code {
+  public DataStorageJsonObject DATA { get; set; }
+  public List<TreeListVM> ProjectTypes { get; set; }
+  public List<TreeListVM> Difficulties { get; set; }
+  public List<Language> Languages { get; set; }
+  public string SaveDataString { get; set; }
+
+  public class TreeListVM {
+    public string Name { get; set; }
+    public int Id { get; set; }
+    public int ECount { get; set; }
+    public int Priority { get; set; }
+    public List<TreeListVM> Options { get; set; }
+  }
+  protected override async Task OnInitializedAsync() {
+    DATA = await Backend.LoadData(Http);
+
+    ProjectTypes = new List<TreeListVM>();
+    foreach(var proj in DATA.ProjectTypes) {
+      var pt = new TreeListVM();
+      pt.Name = proj.Name;
+      pt.Id = proj.Id;
+      pt.Options = new List<TreeListVM>();
+      int i = 0;
+      foreach(var opt in proj.Options) {
+        var newopt = new TreeListVM();
+        newopt.Name = opt;
+        newopt.Id = pt.Id * 100 + i++;
+        pt.Options.Add(newopt);
+      }
+      ProjectTypes.Add(pt);
+    }
+
+    Difficulties = new List<TreeListVM>();
+    foreach(var diff in DATA.Difficulties) {
+      var d = new TreeListVM();
+      d.Name = diff.Name;
+      d.Id = diff.Id;
+      d.ECount = diff.ElementCount;
+      d.Priority = diff.Priority;
+      d.Options = new List<TreeListVM>();
+      int i = 0;
+      foreach(var elem in diff.Elements) {
+        var newEl = new TreeListVM();
+        newEl.Name = elem;
+        newEl.Id = d.Id * 100 + i++;
+        d.Options.Add(newEl);
+      }
+      Difficulties.Add(d);
+    }
+
+    Languages = DATA.Languages;
+
+    SaveDataString = Newtonsoft.Json.JsonConvert.SerializeObject(DATA);
+  }
+
+  async Task CreateProjectTypeHandler(TreeListCommandEventArgs args) {
+    await CreateTreeHandler(args, ProjectTypes);
+  }
+  async Task DeleteProjectTypeHandler(TreeListCommandEventArgs args) {
+    await DeleteTreeHandler(args, ProjectTypes);
+  }
+  async Task UpdateProjectTypeHandler(TreeListCommandEventArgs args) {
+    await UpdateTreeHandler(args, ProjectTypes);
+  }
+
+  async Task CreateDifficultiesHandler(TreeListCommandEventArgs args) {
+    await CreateTreeHandler(args, Difficulties);
+  }
+  async Task DeleteDifficultiesHandler(TreeListCommandEventArgs args) {
+    await DeleteTreeHandler(args, Difficulties);
+  }
+  async Task UpdateDifficultiesHandler(TreeListCommandEventArgs args) {
+    await UpdateTreeHandler(args, Difficulties);
+  }
+
+  async Task CreateTreeHandler(TreeListCommandEventArgs args, List<TreeListVM> targetList) {
+    var item = args.Item as TreeListVM;
+    var parentItem = args.ParentItem as TreeListVM;
+    if(parentItem == null) {
+      item.Options = new List<TreeListVM>();
+      item.Id = targetList.Count + 1;
+      targetList.Add(item);
+    } else {
+      item.Id = parentItem.Id * 100 + targetList.First(i => i.Id == parentItem.Id).Options.Count;
+      targetList.First(i => i.Id == parentItem.Id).Options.Add(item);
+    }
+  }
+  async Task DeleteTreeHandler(TreeListCommandEventArgs args, List<TreeListVM> targetList) {
+    var item = args.Item as TreeListVM;
+    var parentItem = args.ParentItem as TreeListVM;
+    if(parentItem == null) {
+      targetList.RemoveAll(i => i.Id == item.Id);
+    } else {
+      targetList.First(p => p.Id == parentItem.Id).Options.RemoveAll(i => i.Id == item.Id);
+    }
+  }
+  async Task UpdateTreeHandler(TreeListCommandEventArgs args, List<TreeListVM> targetList) {
+    var item = args.Item as TreeListVM;
+    TreeListVM parentItem = null;
+    if(!targetList.Select(x => x.Id).Contains(item.Id)) {
+      parentItem = targetList.First(p => p.Options.Select(o => o.Id).Contains(item.Id));
+    }
+    if(parentItem == null) {
+      int targetIndex = targetList.IndexOf(targetList.First(i => i.Id == item.Id));
+      targetList[targetIndex].Name = item.Name;
+      targetList[targetIndex].ECount = item.ECount;
+      targetList[targetIndex].Priority = item.Priority;
+    } else {
+      var parent = targetList.First(p => p.Id == parentItem.Id);
+      int targetIndex = parent.Options.IndexOf(parent.Options.First(i => i.Id == item.Id));
+      parent.Options[targetIndex].Name = item.Name;
+      parent.Options[targetIndex].ECount = item.ECount;
+      parent.Options[targetIndex].Priority = item.Priority;
+    }
+  }
+
+
+  async Task CreateLanguageHandler(GridCommandEventArgs args) {
+    var item = args.Item as Language;
+    item.Id = Languages.Count + 1;
+    Languages.Add(item);
+  }
+  async Task DeleteLanguageHandler(GridCommandEventArgs args) {
+    var item = args.Item as Language;
+    Languages.RemoveAll(l => l.Id == item.Id);
+  }
+  async Task UpdateLanguageHandler(GridCommandEventArgs args) {
+    var item = args.Item as Language;
+    Languages[Languages.IndexOf(Languages.First(l => l.Id == item.Id))].Name = item.Name;
+  }
+
+  async void SaveData() {
+    List<ProjectType> pTypes = new List<ProjectType>();
+    foreach(var pTypeVM in ProjectTypes) {
+      var pType = new ProjectType();
+      pType.Name = pTypeVM.Name;
+      pType.Id = pTypeVM.Id;
+      pType.Options = new List<string>();
+      foreach(var optVM in pTypeVM.Options) {
+        pType.Options.Add(optVM.Name);
+      }
+      pTypes.Add(pType);
+    }
+
+    List<Difficulty> diffs = new List<Difficulty>();
+    foreach(var diffVM in Difficulties) {
+      var diff = new Difficulty();
+      diff.Name = diffVM.Name;
+      diff.Id = diffVM.Id;
+      diff.ElementCount = diffVM.ECount;
+      diff.Priority = diffVM.Priority;
+      diff.Elements = new List<string>();
+      foreach(var elemVM in diffVM.Options) {
+        diff.Elements.Add(elemVM.Name);
+      }
+      diffs.Add(diff);
+    }
+
+    List<Language> langs = Languages;
+
+    DataStorageJsonObject djso = new DataStorageJsonObject() { ProjectTypes = pTypes, Difficulties = diffs, Languages = langs };
+    Backend.SaveData(djso, Http);
+    SaveDataString = Newtonsoft.Json.JsonConvert.SerializeObject(djso);
+  }
+
+  async Task LoadData() {
+    DATA = Newtonsoft.Json.JsonConvert.DeserializeObject<DataStorageJsonObject>(SaveDataString);
+
+    ProjectTypes = new List<TreeListVM>();
+    foreach(var proj in DATA.ProjectTypes) {
+      var pt = new TreeListVM();
+      pt.Name = proj.Name;
+      pt.Id = proj.Id;
+      pt.Options = new List<TreeListVM>();
+      int i = 0;
+      foreach(var opt in proj.Options) {
+        var newopt = new TreeListVM();
+        newopt.Name = opt;
+        newopt.Id = pt.Id * 100 + i++;
+        pt.Options.Add(newopt);
+      }
+      ProjectTypes.Add(pt);
+    }
+
+    Difficulties = new List<TreeListVM>();
+    foreach(var diff in DATA.Difficulties) {
+      var d = new TreeListVM();
+      d.Name = diff.Name;
+      d.Id = diff.Id;
+      d.ECount = diff.ElementCount;
+      d.Priority = diff.Priority;
+      d.Options = new List<TreeListVM>();
+      int i = 0;
+      foreach(var elem in diff.Elements) {
+        var newEl = new TreeListVM();
+        newEl.Name = elem;
+        newEl.Id = d.Id * 100 + i++;
+        d.Options.Add(newEl);
+      }
+      Difficulties.Add(d);
+    }
+
+    Languages = DATA.Languages;
+  }
+}

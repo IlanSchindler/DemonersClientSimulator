@@ -1,78 +1,106 @@
 ﻿@page "/"
-@using DemonersClientSimulator.Shared
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
-        Client Simulator Prompt Generator
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <TelerikMultiSelect Data="@LanguageOptions" @bind-Value="@SelectedLanguages" TextField="LanguageName" ValueField="LanguageId"/>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <TelerikComboBox Data="@ProjectTypeOptions" @bind-Value="@SelectedProjectType" TextField="ProjectTypeName" ValueField="ProjectTypeId"/>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <TelerikComboBox Data="@DifficultyOptions" @bind-Value="@SelectedDifficulty" TextField="DifficultyName" ValueField="DifficultyId" />
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <TelerikButton OnClick="@GetPrompt">Generate Prompt</TelerikButton>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <TelerikTextArea @bind-Value="@GeneratedPrompt" AutoSize="true" Enabled="false"/>
-      </div>
+@using DemonersClientSimulator.Shared.DataStorage
+
+@inject DemonersClientSimulator.Client.Shared.BackendService Backend
+@inject HttpClient Http
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      Client Simulator Prompt Generator
     </div>
   </div>
+  <div class="row">
+    <div class="col-md-12">
+      <TelerikMultiSelect Data="@LanguageOptions" @bind-Value="@SelectedLanguages" TextField="Name" ValueField="Id" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <TelerikComboBox Data="@ProjectTypeOptions" @bind-Value="@SelectedProjectType" TextField="Name" ValueField="Id" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <TelerikComboBox Data="@DifficultyOptions" @bind-Value="@SelectedDifficulty" TextField="Name" ValueField="Id" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <TelerikButton OnClick="@GetPrompt">Generate Prompt</TelerikButton>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <style>
+        .k-textarea{
+          color:black;
+        }
+      </style>
+      <TelerikTextArea @bind-Value="@GeneratedPrompt" AutoSize="true" Enabled="false" />
+    </div>
+  </div>
+</div>
 
 
 @code{
-  public List<LanguagesComboModel> LanguageOptions { get; set; }
+  public List<Language> LanguageOptions { get; set; }
   public List<int> SelectedLanguages { get; set; }
 
-  public List<ProjectTypeComboModel> ProjectTypeOptions { get; set; }
+  public List<ProjectType> ProjectTypeOptions { get; set; }
   public int SelectedProjectType { get; set; }
 
-  public List<DifficultyComboModel> DifficultyOptions { get; set; }
+  public List<Difficulty> DifficultyOptions { get; set; }
   public int SelectedDifficulty { get; set; }
 
   public string GeneratedPrompt { get; set; }
 
+  public DataStorageJsonObject Data { get; set; }
+
   protected override async Task OnInitializedAsync() {
-    throw new NotImplementedException();
-    /*
-    initialize language options
-    initialize dificulty options
-    initialize project types
-      */
+    Data = await Backend.LoadData(Http);
+    LanguageOptions = Data.Languages;
+    ProjectTypeOptions = Data.ProjectTypes;
+    DifficultyOptions = Data.Difficulties;
+    SelectedLanguages = new List<int>();
   }
 
   async Task GetPrompt() {
-    throw new NotImplementedException();
+    List<string> possibleProjects = ProjectTypeOptions.First(p => p.Id == SelectedProjectType).Options;
+
+    var difficulty = DifficultyOptions.First(d => d.Id == SelectedDifficulty);
+    List<string> possibleElements = DifficultyOptions.Where(d => d.Priority >= difficulty.Priority).SelectMany(d => d.Elements).ToList();
+    int elementCount = difficulty.ElementCount;
+    
+    List<string> possibleLanguages = LanguageOptions.Where(l => SelectedLanguages.Contains(l.Id)).Select(l => l.Name).ToList();
+    int seed = await Backend.GetRandSeed(Http);
+    var rand = new Random();
+    
+    string selectedProject = possibleProjects[rand.Next(possibleProjects.Count)];
+    
+    string selectedLanguage = possibleLanguages[rand.Next(possibleLanguages.Count)];
+    
+    List<string> selectedElements = new List<string>();
+    if(possibleElements.Count <= elementCount) {
+      selectedElements = possibleElements;
+    } else {
+      for(int i = 0; i < elementCount; i++) {
+        int selectedIndex = rand.Next(possibleElements.Count);
+        var selectedElement = possibleElements[selectedIndex];
+        selectedElements.Add(selectedElement);
+        possibleElements.RemoveAt(selectedIndex);
+      }
+    }
+
+    string promptString = "" +
+        "Selected Specifications for Project:\n" +
+        $"Project: {selectedProject}\n" +
+        $"Language: {selectedLanguage}\n" +
+        $"Required Elements:\n";
+    foreach(var elem in selectedElements) {
+      promptString = $"{promptString}\t{elem}\n";
+    }
+
+    GeneratedPrompt = promptString;
   }
 
-
-
-  //public class LanguagesComboModel {
-  //  public string LanguageName { get; set; }
-  //  public int LanguageId { get; set; }
-  //}
-
-  //public class ProjectTypeComboModel {
-  //  public string ProjectTypeName { get; set; }
-  //  public int ProjectTypeId { get; set; }
-  //}
-
-  //public class DifficultyComboModel {
-  //  public string DifficultyName { get; set; }
-  //  public int DifficultyId { get; set; }
-  //}
 }

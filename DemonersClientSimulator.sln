@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemonersClientSimulator.Cli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemonersClientSimulator.Shared", "DemonersClientSimulator\Shared\DemonersClientSimulator.Shared.csproj", "{021B32F9-C865-4A57-B30F-5C507E900BC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTesterApp", "ConsoleTesterApp\ConsoleTesterApp.csproj", "{6F6323CC-11CC-4F10-9FA7-1131BD30B8DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTesterApp", "ConsoleTesterApp\ConsoleTesterApp.csproj", "{6F6323CC-11CC-4F10-9FA7-1131BD30B8DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -10,7 +10,7 @@ namespace DemonersClientSimulator.Client {
       var builder = WebAssemblyHostBuilder.CreateDefault(args);
       builder.RootComponents.Add<App>("#app");
       builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
+      builder.Services.AddScoped<Client.Shared.BackendService>();
       builder.Services.AddTelerikBlazor();
 
       await builder.Build().RunAsync();
